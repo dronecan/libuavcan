@@ -879,41 +879,28 @@ uavcan::CanSelectMasks CanDriver::makeSelectMasks(const uavcan::CanFrame* (& pen
 {
     uavcan::CanSelectMasks msk;
 
-    // Iface 0
-    msk.read  = if0_.isRxBufferEmpty() ? 0 : 1;
+    for (uavcan::uint8_t i = 0; i < num_ifaces_; i++) {
+        CanIface* iface = ifaces[if_int_to_gl_index_[i]];
+        msk.read  |= (iface->isRxBufferEmpty() ? 0 : 1) << i;
 
-    if (pending_tx[0] != UAVCAN_NULLPTR)
-    {
-        msk.write = if0_.canAcceptNewTxFrame(*pending_tx[0]) ? 1 : 0;
-    }
-
-    // Iface 1
-#if UAVCAN_STM32_NUM_IFACES > 1
-    if (!if1_.isRxBufferEmpty())
-    {
-        msk.read |= 1 << 1;
-    }
-
-    if (pending_tx[1] != UAVCAN_NULLPTR)
-    {
-        if (if1_.canAcceptNewTxFrame(*pending_tx[1]))
+        if (pending_tx[i] != UAVCAN_NULLPTR)
         {
-            msk.write |= 1 << 1;
+            msk.write |= (iface->canAcceptNewTxFrame(*pending_tx[i]) ? 1 : 0) << i;
         }
     }
-#endif
+
     return msk;
 }
 
 bool CanDriver::hasReadableInterfaces() const
 {
-#if UAVCAN_STM32_NUM_IFACES == 1
-	return !if0_.isRxBufferEmpty();
-#elif UAVCAN_STM32_NUM_IFACES == 2
-	return !if0_.isRxBufferEmpty() || !if1_.isRxBufferEmpty();
-#else
-# error UAVCAN_STM32_NUM_IFACES
-#endif
+    for (uavcan::uint8_t i = 0; i < num_ifaces_; i++) {
+        if (!ifaces[if_int_to_gl_index_[i]]->isRxBufferEmpty()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 uavcan::int16_t CanDriver::select(uavcan::CanSelectMasks& inout_masks,
@@ -923,19 +910,14 @@ uavcan::int16_t CanDriver::select(uavcan::CanSelectMasks& inout_masks,
     const uavcan::CanSelectMasks in_masks = inout_masks;
     const uavcan::MonotonicTime time = clock::getMonotonic();
 
-    if0_.discardTimedOutTxMailboxes(time);              // Check TX timeouts - this may release some TX slots
-    {
-        CriticalSectionLocker cs_locker;
-        if0_.pollErrorFlagsFromISR();
+    for (uavcan::uint8_t i = 0; i < num_ifaces_; i++) {
+        CanIface* iface = ifaces[if_int_to_gl_index_[i]];
+        iface->discardTimedOutTxMailboxes(time);              // Check TX timeouts - this may release some TX slots
+        {
+            CriticalSectionLocker cs_locker;
+            iface->pollErrorFlagsFromISR();
+        }
     }
-
-#if UAVCAN_STM32_NUM_IFACES > 1
-    if1_.discardTimedOutTxMailboxes(time);
-    {
-        CriticalSectionLocker cs_locker;
-        if1_.pollErrorFlagsFromISR();
-    }
-#endif
 
     inout_masks = makeSelectMasks(pending_tx);          // Check if we already have some of the requested events
     if ((inout_masks.read  & in_masks.read)  != 0 ||
@@ -1170,13 +1152,19 @@ int CanDriver::init(const uavcan::uint32_t bitrate, const CanIface::OperatingMod
 
     UAVCAN_STM32_LOG("Bitrate %lu mode %d", static_cast<unsigned long>(bitrate), static_cast<int>(mode));
     if (can_number > UAVCAN_STM32_NUM_IFACES) {
+        res = -1;
         goto fail;
     }
     static bool initialized_once[UAVCAN_STM32_NUM_IFACES] = {false};
+
     if (!initialized_once[can_number]) {
         initialized_once[can_number] = true;
-        UAVCAN_STM32_LOG("First initialization");
+        initialized_by_me_[can_number] = true;
         initOnce(can_number);
+    } else if (!initialized_by_me_[can_number]) {
+        UAVCAN_STM32_LOG("CAN iface %d initialized in another CANDriver!", can_number);
+        res = -2;
+        goto fail;
     }
 
     if (can_number == 0) {
@@ -1209,6 +1197,8 @@ int CanDriver::init(const uavcan::uint32_t bitrate, const CanIface::OperatingMod
     #endif
     }
 
+    if_int_to_gl_index_[num_ifaces_++] = can_number;
+
     UAVCAN_STM32_LOG("CAN drv init OK");
     UAVCAN_ASSERT(res >= 0);
     return res;
@@ -1221,20 +1211,22 @@ fail:
 
 CanIface* CanDriver::getIface(uavcan::uint8_t iface_index)
 {
-    if (iface_index < UAVCAN_STM32_NUM_IFACES)
+    if (iface_index < num_ifaces_)
     {
-        return ifaces[iface_index];
+        return ifaces[if_int_to_gl_index_[iface_index]];
     }
     return UAVCAN_NULLPTR;
 }
 
 bool CanDriver::hadActivity()
 {
-    bool ret = if0_.hadActivity();
-#if UAVCAN_STM32_NUM_IFACES > 1
-    ret |= if1_.hadActivity();
-#endif
-    return ret;
+    for (uavcan::uint8_t i = 0; i < num_ifaces_; i++) {
+        if (ifaces[if_int_to_gl_index_[i]]->hadActivity()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 } // namespace uavcan_stm32

@@ -238,6 +238,10 @@ class CanDriver : public uavcan::ICanDriver, uavcan::Noncopyable
 #if UAVCAN_STM32_NUM_IFACES > 1
     CanIface if1_;
 #endif
+    bool initialized_by_me_[UAVCAN_STM32_NUM_IFACES];
+    uavcan::uint8_t num_ifaces_;
+    uavcan::uint8_t if_int_to_gl_index_[UAVCAN_STM32_NUM_IFACES];
+
 
     virtual uavcan::int16_t select(uavcan::CanSelectMasks& inout_masks,
                                    const uavcan::CanFrame* (& pending_tx)[uavcan::MaxCanIfaces],
@@ -277,7 +281,7 @@ public:
 
     virtual CanIface* getIface(uavcan::uint8_t iface_index);
 
-    virtual uavcan::uint8_t getNumIfaces() const { return UAVCAN_STM32_NUM_IFACES; }
+    virtual uavcan::uint8_t getNumIfaces() const { return num_ifaces_; }
 
     /**
      * Whether at least one iface had at least one successful IO since previous call of this method.
