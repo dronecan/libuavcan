@@ -34,7 +34,7 @@
 # endif
 #endif
 
-#if (UAVCAN_STM32_CHIBIOS && (CH_KERNEL_MAJOR == 3 || CH_KERNEL_MAJOR == 4))
+#if (UAVCAN_STM32_CHIBIOS && (CH_KERNEL_MAJOR == 3 || CH_KERNEL_MAJOR == 4 || CH_KERNEL_MAJOR == 5))
 #define CAN1_TX_IRQHandler      STM32_CAN1_TX_HANDLER
 #define CAN1_RX0_IRQHandler     STM32_CAN1_RX0_HANDLER
 #define CAN1_RX1_IRQHandler     STM32_CAN1_RX1_HANDLER
@@ -548,7 +548,11 @@ bool CanIface::waitMsrINakBitStateChange(bool target_state)
         ::usleep(1000);
 #endif
 #if UAVCAN_STM32_CHIBIOS
-        ::chThdSleep(MS2ST(1));
+#if CH_KERNEL_MAJOR >= 5
+    ::chThdSleep(chTimeMS2I(1));
+#else
+    ::chThdSleep(MS2ST(1));
+#endif
 #endif
 #if UAVCAN_STM32_FREERTOS
         ::osDelay(1);

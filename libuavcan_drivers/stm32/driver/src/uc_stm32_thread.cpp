@@ -35,6 +35,8 @@ bool BusEvent::wait(uavcan::MonotonicDuration duration)
     {
 # if (CH_KERNEL_MAJOR == 2)
         ret = sem_.waitTimeout((usec > MaxDelayUSec) ? US2ST(MaxDelayUSec) : US2ST(usec));
+# elif (CH_KERNEL_MAJOR >= 5)
+        ret = sem_.wait((usec > MaxDelayUSec) ? chTimeUS2I(MaxDelayUSec) : chTimeUS2I(usec));
 # else // ChibiOS 3+
         ret = sem_.wait((usec > MaxDelayUSec) ? US2ST(MaxDelayUSec) : US2ST(usec));
 # endif
