@@ -1070,7 +1070,7 @@ fail:
     return res;
 }
 
-void CanDriver::initOnce(uavcan::uint8_t can_number)
+void CanDriver::initOnce(uavcan::uint8_t can_number, bool enable_irqs)
 {
     /*
      * CAN1, CAN2
@@ -1106,6 +1106,9 @@ void CanDriver::initOnce(uavcan::uint8_t can_number)
 #endif
     }
 
+    if (!enable_irqs) {
+        return;
+    }
     /*
      * IRQ
      */
@@ -1168,7 +1171,7 @@ int CanDriver::init(const uavcan::uint32_t bitrate, const CanIface::OperatingMod
         if (can_number == 1 && !initialized_once[0]) {
             UAVCAN_STM32_LOG("Iface 0 is not initialized yet but we need it for Iface 1, trying to init it");
             UAVCAN_STM32_LOG("Enabling CAN iface 0");
-            initOnce(0);
+            initOnce(0, false);
             UAVCAN_STM32_LOG("Initing iface 0...");
             res = if0_.init(bitrate, mode);
 
@@ -1179,7 +1182,7 @@ int CanDriver::init(const uavcan::uint32_t bitrate, const CanIface::OperatingMod
         }
 
         UAVCAN_STM32_LOG("Enabling CAN iface %d", can_number);
-        initOnce(can_number);
+        initOnce(can_number, true);
     } else if (!initialized_by_me_[can_number]) {
         UAVCAN_STM32_LOG("CAN iface %d initialized in another CANDriver!", can_number);
         res = -2;

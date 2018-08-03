@@ -248,7 +248,7 @@ class CanDriver : public uavcan::ICanDriver, uavcan::Noncopyable
                                    uavcan::MonotonicTime blocking_deadline);
 
     static void initOnce();
-    static void initOnce(uavcan::uint8_t can_number);
+    static void initOnce(uavcan::uint8_t can_number, bool enable_irqs);
 
 public:
     template <unsigned RxQueueCapacity>
