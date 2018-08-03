@@ -1164,6 +1164,21 @@ int CanDriver::init(const uavcan::uint32_t bitrate, const CanIface::OperatingMod
     if (!initialized_once[can_number]) {
         initialized_once[can_number] = true;
         initialized_by_me_[can_number] = true;
+
+        if (can_number == 1 && !initialized_once[0]) {
+            UAVCAN_STM32_LOG("Iface 0 is not initialized yet but we need it for Iface 1, trying to init it");
+            UAVCAN_STM32_LOG("Enabling CAN iface 0");
+            initOnce(0);
+            UAVCAN_STM32_LOG("Initing iface 0...");
+            res = if0_.init(bitrate, mode);
+
+            if (res < 0) {
+                UAVCAN_STM32_LOG("Iface 0 init failed %i", res);
+                goto fail;
+            }
+        }
+
+        UAVCAN_STM32_LOG("Enabling CAN iface %d", can_number);
         initOnce(can_number);
     } else if (!initialized_by_me_[can_number]) {
         UAVCAN_STM32_LOG("CAN iface %d initialized in another CANDriver!", can_number);
