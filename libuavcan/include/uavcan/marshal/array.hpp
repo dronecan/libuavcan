@@ -827,18 +827,18 @@ public:
      * This operator can only be used with string-like arrays; otherwise it will fail to compile.
      * @ref c_str()
      */
-    SelfType& operator=(const char* ch)
+    SelfType& operator=(const char* c)
     {
         StaticAssert<Base::IsStringLike>::check();
         StaticAssert<IsDynamic>::check();
         Base::clear();
-        if (ch == UAVCAN_NULLPTR)
+        if (c == UAVCAN_NULLPTR)
         {
             handleFatalError("Array::operator=(const char*)");
         }
-        while (*ch)
+        while (*c)
         {
-            push_back(ValueType(*ch++));  // Value type is likely to be unsigned char, so conversion may be required.
+            push_back(ValueType(*c++));  // Value type is likely to be unsigned char, so conversion may be required.
         }
         return *this;
     }
@@ -847,17 +847,17 @@ public:
      * This operator can only be used with string-like arrays; otherwise it will fail to compile.
      * @ref c_str()
      */
-    SelfType& operator+=(const char* ch)
+    SelfType& operator+=(const char* c)
     {
         StaticAssert<Base::IsStringLike>::check();
         StaticAssert<IsDynamic>::check();
-        if (ch == UAVCAN_NULLPTR)
+        if (c == UAVCAN_NULLPTR)
         {
             handleFatalError("Array::operator+=(const char*)");
         }
-        while (*ch)
+        while (*c)
         {
-            push_back(ValueType(*ch++));
+            push_back(ValueType(*c++));
         }
         return *this;
     }
