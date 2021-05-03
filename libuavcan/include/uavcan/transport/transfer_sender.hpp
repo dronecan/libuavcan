@@ -30,7 +30,7 @@ class UAVCAN_EXPORT TransferSender
     CanIOFlags flags_;
     uint8_t iface_mask_;
     bool allow_anonymous_transfers_;
-
+    bool canfd_frames_;
     void registerError() const;
 
 public:
@@ -42,7 +42,7 @@ public:
     }
 
     TransferSender(Dispatcher& dispatcher, const DataTypeDescriptor& data_type, CanTxQueue::Qos qos,
-                   MonotonicDuration max_transfer_interval = getDefaultMaxTransferInterval())
+                    MonotonicDuration max_transfer_interval = getDefaultMaxTransferInterval())
         : max_transfer_interval_(max_transfer_interval)
         , dispatcher_(dispatcher)
         , priority_(TransferPriority::Default)
