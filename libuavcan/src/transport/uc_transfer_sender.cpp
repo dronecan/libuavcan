@@ -28,7 +28,7 @@ int TransferSender::send(const uint8_t* payload, unsigned payload_len, Monotonic
                          MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id,
                          TransferID tid) const
 {
-    Frame frame(data_type_id_, transfer_type, dispatcher_.getNodeID(), dst_node_id, tid);
+    Frame frame(data_type_id_, transfer_type, dispatcher_.getNodeID(), dst_node_id, tid, dispatcher_.isCanFdEnabled());
 
     frame.setPriority(priority_);
     frame.setStartOfTransfer(true);
