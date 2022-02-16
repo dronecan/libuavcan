@@ -44,12 +44,12 @@ int GenericPublisherBase::genericPublish(const StaticTransferBufferImpl& buffer,
     if (tid)
     {
         return sender_.send(buffer.getRawPtr(), buffer.getMaxWritePos(), getTxDeadline(),
-                            blocking_deadline, transfer_type, dst_node_id, *tid);
+                            blocking_deadline, transfer_type, dst_node_id, *tid, force_std_can_);
     }
     else
     {
         return sender_.send(buffer.getRawPtr(), buffer.getMaxWritePos(), getTxDeadline(),
-                            blocking_deadline, transfer_type, dst_node_id);
+                            blocking_deadline, transfer_type, dst_node_id, force_std_can_);
     }
 }
 

@@ -35,9 +35,9 @@ public:
      *                                  will be garbage collected by the library if it's no longer
      *                                  being published.
      */
-    explicit Publisher(INode& node, MonotonicDuration tx_timeout = getDefaultTxTimeout(),
+    explicit Publisher(INode& node, bool force_std_can = false, MonotonicDuration tx_timeout = getDefaultTxTimeout(),
                        MonotonicDuration max_transfer_interval = TransferSender::getDefaultMaxTransferInterval())
-        : BaseType(node, tx_timeout, max_transfer_interval)
+        : BaseType(node, force_std_can, tx_timeout, max_transfer_interval)
     {
 #if UAVCAN_DEBUG
         UAVCAN_ASSERT(getTxTimeout() == tx_timeout);  // Making sure default values are OK

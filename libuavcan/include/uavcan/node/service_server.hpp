@@ -140,9 +140,9 @@ private:
     }
 
 public:
-    explicit ServiceServer(INode& node)
+    explicit ServiceServer(INode& node, bool force_std_can = false)
         : SubscriberType(node)
-        , publisher_(node, getDefaultTxTimeout())
+        , publisher_(node, force_std_can, getDefaultTxTimeout())
         , callback_()
         , response_failure_count_(0)
     {
