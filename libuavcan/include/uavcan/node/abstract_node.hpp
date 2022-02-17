@@ -64,8 +64,7 @@ public:
      */
     int spin(MonotonicTime deadline)
     {
-        getScheduler().getDispatcher().setTaoDisabled(tao_disabled_);
-        getScheduler().getDispatcher().setCanFdEnabled(canfd_);
+        getScheduler().getDispatcher().set_options(tao_disabled_, canfd_);
         return getScheduler().spin(deadline);
     }
 
@@ -77,8 +76,7 @@ public:
      */
     int spin(MonotonicDuration duration)
     {
-        getScheduler().getDispatcher().setTaoDisabled(tao_disabled_);
-        getScheduler().getDispatcher().setCanFdEnabled(canfd_);
+        getScheduler().getDispatcher().set_options(tao_disabled_, canfd_);
         return getScheduler().spin(getMonotonicTime() + duration);
     }
 
@@ -91,8 +89,7 @@ public:
      */
     int spinOnce()
     {
-        getScheduler().getDispatcher().setTaoDisabled(tao_disabled_);
-        getScheduler().getDispatcher().setCanFdEnabled(canfd_);
+        getScheduler().getDispatcher().set_options(tao_disabled_, canfd_);
         return getScheduler().spinOnce();
     }
 
