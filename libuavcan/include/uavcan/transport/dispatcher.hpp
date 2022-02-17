@@ -241,8 +241,7 @@ public:
     const TransferPerfCounter& getTransferPerfCounter() const { return perf_; }
     TransferPerfCounter& getTransferPerfCounter() { return perf_; }
 
-    void setTaoDisabled(bool disable) { tao_disabled_ = disable; }
-    void setCanFdEnabled(bool enable) { canfd_ = enable; }
+    void set_options(bool tao_disabled, bool canfd) { tao_disabled_ = tao_disabled; canfd_ = canfd; }
 };
 
 }
