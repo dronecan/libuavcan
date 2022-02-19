@@ -53,6 +53,7 @@ struct UAVCAN_EXPORT CanFrame
     {
         UAVCAN_ASSERT(can_data != UAVCAN_NULLPTR);
         UAVCAN_ASSERT(data_len == dlc);
+        fill(data, data + MaxDataLen, uint8_t(0));
         (void)copy(can_data, can_data + data_len, this->data);
         if (data_len <= 8) {
             dlc = data_len;
