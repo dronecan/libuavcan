@@ -52,7 +52,6 @@ struct UAVCAN_EXPORT CanFrame
         canfd(canfd_frame)
     {
         UAVCAN_ASSERT(can_data != UAVCAN_NULLPTR);
-        UAVCAN_ASSERT(data_len == dlc);
         fill(data, data + MaxDataLen, uint8_t(0));
         (void)copy(can_data, can_data + data_len, this->data);
         if (data_len <= 8) {
@@ -139,10 +138,11 @@ struct UAVCAN_EXPORT CanFrame
     static uint8_t getNumPaddingBytes(uint16_t payload_len) {
         if (payload_len > 63) {
             // account for additional 2 bytes for CRC
-            payload_len+=2;
+            payload_len = static_cast<uint16_t>(payload_len + 2u);
         }
-        uint8_t padding = dlcToDataLength(dataLengthToDlc((payload_len % 63)+1))-1;
-        padding -= (payload_len % 63);
+        uint8_t rest = static_cast<uint8_t>(payload_len % static_cast<uint16_t>(63));
+        uint8_t padding = static_cast<uint8_t>(dlcToDataLength(dataLengthToDlc(static_cast<uint8_t>(rest+1)))-1);
+        padding = static_cast<uint8_t>(padding - rest);
         return padding;
     }
 

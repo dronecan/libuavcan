@@ -20,7 +20,7 @@ public:
         , data_type_(type)
     { }
 
-    void sendOneFrame(const uavcan::RxFrame& frame) { target_.handleFrame(frame); }
+    void sendOneFrame(const uavcan::RxFrame& frame) { target_.handleFrame(frame, false); }
 
     Transfer makeTransfer(uavcan::TransferPriority priority, uavcan::TransferType transfer_type,
                           uint8_t source_node_id, const std::string& payload)

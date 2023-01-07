@@ -189,7 +189,7 @@ void TransferListener::handleAnonymousTransferReception(const RxFrame& frame, bo
 
 uint16_t TransferListener::actual_max_buffer_size(uint16_t max_buffer_size)
 {
-    return max_buffer_size+CanFrame::getNumPaddingBytes(max_buffer_size);
+    return static_cast<uint16_t>(max_buffer_size+CanFrame::getNumPaddingBytes(max_buffer_size));
 }
 
 TransferListener::~TransferListener()

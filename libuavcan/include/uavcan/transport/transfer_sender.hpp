@@ -94,9 +94,9 @@ public:
      * Send with explicit Transfer ID.
      * Should be used only for service responses, where response TID should match request TID.
      */
-    int send(const uint8_t* payload, unsigned payload_len, MonotonicTime tx_deadline,
+    int send(const uint8_t* payload, uint16_t payload_len, MonotonicTime tx_deadline,
              MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id,
-             TransferID tid, bool force_std_can) const;
+             TransferID tid, bool force_std_can = false) const;
 
     /**
      * Send with automatic Transfer ID.
@@ -106,8 +106,8 @@ public:
      *
      * TID is managed by OutgoingTransferRegistry.
      */
-    int send(const uint8_t* payload, unsigned payload_len, MonotonicTime tx_deadline,
-             MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id, bool force_std_can) const;
+    int send(const uint8_t* payload, uint16_t payload_len, MonotonicTime tx_deadline,
+             MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id, bool force_std_can = false) const;
 };
 
 }

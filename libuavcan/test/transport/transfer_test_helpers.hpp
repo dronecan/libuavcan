@@ -305,7 +305,7 @@ public:
         send(sers);
     }
 
-    template <int SIZE> void send(const Transfer (&transfers)[SIZE]) { send(transfers, SIZE); }
+    template <long unsigned int SIZE> void send(const Transfer (&transfers)[SIZE]) { send(transfers, SIZE); }
 };
 
 /**

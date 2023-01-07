@@ -78,6 +78,15 @@ public:
         reset();
     }
 
+    BitSet(const BitSet<NumBits>& rhs)
+        : data_()
+    {
+        for (std::size_t i = 0; i < NumBytes; ++i)
+        {
+            data_[i] = rhs.data_[i];
+        }
+    }
+
     BitSet<NumBits>& reset()
     {
         std::memset(data_, 0, NumBytes);

@@ -394,6 +394,8 @@ public:
               const FirmwareFilePath& arg_alt_path_prefix = FirmwareFilePath(),
               const TransferPriority priority = TransferPriority::OneHigherThanLowest)
     {
+        (void)arg_alt_path_prefix; // unused
+
         /*
          * Configuring the node info retriever
          */

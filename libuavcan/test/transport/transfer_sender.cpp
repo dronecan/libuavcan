@@ -12,7 +12,7 @@ static int sendOne(uavcan::TransferSender& sender, const std::string& data,
                    uint64_t monotonic_tx_deadline, uint64_t monotonic_blocking_deadline,
                    uavcan::TransferType transfer_type, uavcan::NodeID dst_node_id)
 {
-    return sender.send(reinterpret_cast<const uint8_t*>(data.c_str()), unsigned(data.length()),
+    return sender.send(reinterpret_cast<const uint8_t*>(data.c_str()), static_cast<uint16_t>(data.length()),
                        uavcan::MonotonicTime::fromUSec(monotonic_tx_deadline),
                        uavcan::MonotonicTime::fromUSec(monotonic_blocking_deadline), transfer_type, dst_node_id);
 }
@@ -21,7 +21,7 @@ static int sendOne(uavcan::TransferSender& sender, const std::string& data,
                    uint64_t monotonic_tx_deadline, uint64_t monotonic_blocking_deadline,
                    uavcan::TransferType transfer_type, uavcan::NodeID dst_node_id, uavcan::TransferID tid)
 {
-    return sender.send(reinterpret_cast<const uint8_t*>(data.c_str()), unsigned(data.length()),
+    return sender.send(reinterpret_cast<const uint8_t*>(data.c_str()), static_cast<uint16_t>(data.length()),
                        uavcan::MonotonicTime::fromUSec(monotonic_tx_deadline),
                        uavcan::MonotonicTime::fromUSec(monotonic_blocking_deadline), transfer_type, dst_node_id, tid);
 }
