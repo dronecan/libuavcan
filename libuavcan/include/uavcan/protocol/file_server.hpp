@@ -55,7 +55,7 @@ public:
         root_path_ = path;
         if (root_path_.back() != getPathSeparator())
         {
-            root_path_.push_back(getPathSeparator());
+            root_path_.push_back(static_cast<unsigned char>(getPathSeparator()));
         }
       }
     }
@@ -68,7 +68,7 @@ public:
         alt_root_path_ = path;
         if (alt_root_path_.back() != getPathSeparator())
         {
-            alt_root_path_.push_back(getPathSeparator());
+            alt_root_path_.push_back(static_cast<unsigned char>(getPathSeparator()));
         }
       }
     }

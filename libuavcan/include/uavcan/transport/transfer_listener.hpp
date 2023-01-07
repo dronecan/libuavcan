@@ -81,7 +81,7 @@ class UAVCAN_EXPORT SingleFrameIncomingTransfer : public IncomingTransfer
     const uint8_t* const payload_;
     const uint8_t payload_len_;
 public:
-    explicit SingleFrameIncomingTransfer(const RxFrame& frm, bool tao_disabled);
+    explicit SingleFrameIncomingTransfer(const RxFrame& frm, bool tao_disabled = false);
     virtual int read(unsigned offset, uint8_t* data, unsigned len) const override;
     virtual bool isAnonymousTransfer() const override;
 };
@@ -94,7 +94,7 @@ class UAVCAN_EXPORT MultiFrameIncomingTransfer : public IncomingTransfer, Noncop
     TransferBufferAccessor& buf_acc_;
 public:
     MultiFrameIncomingTransfer(MonotonicTime ts_mono, UtcTime ts_utc, const RxFrame& last_frame,
-                               TransferBufferAccessor& tba, bool tao_disabled);
+                               TransferBufferAccessor& tba, bool tao_disabled = false);
     virtual int read(unsigned offset, uint8_t* data, unsigned len) const override;
     virtual void release() override { buf_acc_.remove(); }
 };

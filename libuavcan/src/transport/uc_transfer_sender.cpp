@@ -24,7 +24,7 @@ void TransferSender::init(const DataTypeDescriptor& dtid, CanTxQueue::Qos qos)
     crc_base_     = dtid.getSignature().toTransferCRC();
 }
 
-int TransferSender::send(const uint8_t* payload, unsigned payload_len, MonotonicTime tx_deadline,
+int TransferSender::send(const uint8_t* payload, uint16_t payload_len, MonotonicTime tx_deadline,
                          MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id,
                          TransferID tid, bool force_std_can) const
 {
@@ -151,7 +151,7 @@ int TransferSender::send(const uint8_t* payload, unsigned payload_len, Monotonic
     return -ErrLogic; // Return path analysis is apparently broken. There should be no warning, this 'return' is unreachable.
 }
 
-int TransferSender::send(const uint8_t* payload, unsigned payload_len, MonotonicTime tx_deadline,
+int TransferSender::send(const uint8_t* payload, uint16_t payload_len, MonotonicTime tx_deadline,
                          MonotonicTime blocking_deadline, TransferType transfer_type, NodeID dst_node_id,
                          bool force_std_can) const
 {
