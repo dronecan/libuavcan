@@ -14,6 +14,8 @@ namespace kdecan
 
 static const int escNodeIdBroadcast = 1;
 static const int escNodeIdOffset = 2;
+static const int minPwmValue = 1100;
+static const int maxPwmValue = 1940;
 
 enum kdeCanObjAddr
 {
