@@ -1,13 +1,8 @@
 #ifndef UAVCAN_INDEPENDENT_KDECAN_HPP_INCLUDED
 #define UAVCAN_INDEPENDENT_KDECAN_HPP_INCLUDED
 
-#include <uavcan/transport/can_io.hpp>
-#include <uavcan/driver/can.hpp>
-#include <uavcan/transport/transfer.hpp>
-#include <uavcan/transport/dispatcher.hpp>
-#include <uavcan/transport/can_io.hpp>
-#include <uavcan/util/linked_list.hpp>
-#include <uavcan/util/lazy_constructor.hpp>
+#include <uavcan/transport/independent.hpp>
+#include <uavcan/node/abstract_node.hpp>
 
 namespace kdecan
 {
@@ -83,28 +78,6 @@ public:
 	}
 };
 
-class KdeCanTransferListener : public uavcan::LinkedListNode<KdeCanTransferListener>
-{
-public:
-	kdeCanObjAddr target_object_address_;
-
-	KdeCanTransferListener(const kdeCanObjAddr target_object_address) :
-		target_object_address_(target_object_address)
-	{;}
-
-	virtual void handleIncomingTransfer(const uint32_t id, const uint8_t dlc, const uint8_t* data) = 0;
-
-	void handleFrame(const uavcan::CanRxFrame& can_frame)
-	{
-		uint32_t object_address = can_frame.id & 0x000000FF;
-		
-		if (object_address == target_object_address_)
-		{
-			handleIncomingTransfer(can_frame.id, can_frame.dlc, can_frame.data);
-		}
-	}
-};
-
 template <kdeCanObjAddr DataType_,
 #if UAVCAN_CPP_VERSION >= UAVCAN_CPP11
 	typename Callback_ = std::function<void (const uint32_t id, const uint8_t dlc, const uint8_t* data)>
@@ -112,41 +85,48 @@ template <kdeCanObjAddr DataType_,
 	typename Callback_ = void (*)(const uint32_t id, const uint8_t dlc, const uint8_t* data)
 #endif
 >
-class KdeCanSubscriber
+class Subscriber
 {
 public:
-	typedef KdeCanSubscriber<DataType_, Callback_> SelfType;
+	typedef Subscriber<DataType_, Callback_> SelfType;
 	typedef Callback_ Callback;
 
-	class kdeTransferForwarder : public KdeCanTransferListener
+	class kdeTransferForwarder : public uavcan::IndependentTransferListener
 	{
 	public:
 		SelfType& obj_;
 
-		void handleIncomingTransfer(const uint32_t id, const uint8_t dlc, const uint8_t* data) override
+		void handleFrame(const uavcan::CanRxFrame& can_frame) override
 		{
-			obj_.handleIncomingTransfer(id, dlc, data);
+			obj_.handleIncomingTransfer(can_frame);
 		}
 
-		kdeTransferForwarder(SelfType& obj, const kdeCanObjAddr target_object_address) :
-			KdeCanTransferListener(target_object_address),
+		kdeTransferForwarder(SelfType& obj) :
+			uavcan::IndependentTransferListener(uavcan::TransferProtocol::KDECANProtocol),
 			obj_(obj)
 		{;}
 	};
 
+	uavcan::INode& node_;
 	Callback callback_;
 	kdeTransferForwarder forwarder_;
+	kdeCanObjAddr target_object_address_;
 
-	KdeCanSubscriber() :
+	Subscriber(uavcan::INode& node) :
+		node_(node),
 		callback_(),
-		forwarder_(*this, DataType_)
+		forwarder_(*this),
+		target_object_address_(DataType_)
 	{;}
 
-	void handleIncomingTransfer(const uint32_t id, const uint8_t dlc, const uint8_t* data)
+	void handleIncomingTransfer(const uavcan::CanRxFrame& can_frame)
 	{
-		if (callback_)
+		uint32_t object_address = can_frame.id & 0x000000FF;
+		uint32_t destination_id = (can_frame.id & 0x0000FF00) >> 8;
+
+		if (destination_id == node_.getNodeID().get() && object_address == target_object_address_ && callback_)
 		{
-			callback_(id, dlc, data);
+			callback_(can_frame.id, can_frame.dlc, can_frame.data);
 		}
 	}
 
@@ -155,25 +135,42 @@ public:
 		callback_ = callback;
 	}
 
-	KdeCanTransferListener* getKdeListener()
+	uavcan::IndependentTransferListener* getKdeListener()
 	{
 		return &(this->forwarder_);
 	}
 };
 
-class KdeCanTransferSender
+template <kdeCanObjAddr DataType_>
+class Publisher
 {
 public:
-	KdeCanTransferSender() {;}
+	uavcan::INode& node_;
+	kdeCanObjAddr target_object_address_;
 
-	bool publish(uavcan::CanFrame& can_frame,
-		     const uint8_t source_address,
-		     const uint8_t destination_address,
-		     const kdeCanObjAddr object_address, const uint8_t* data)
+	Publisher(uavcan::INode& node) :
+		node_(node),
+		target_object_address_(DataType_)
+	{;}
+
+	bool publish(const uint8_t destination_address,
+		     const uint8_t* data)
 	{
-		KdeFrame kde_frame(source_address, destination_address, object_address, data);
+		KdeFrame kde_frame(node_.getNodeID().get(), destination_address, target_object_address_, data);
 
-		return kde_frame.compile(can_frame);
+		uavcan::CanFrame can_frame;
+		kde_frame.compile(can_frame);
+
+		node_.getDispatcher().sendRaw(can_frame,
+			              uavcan::TransferProtocol::KDECANProtocol,
+			              node_.getMonotonicTime() + uavcan::MonotonicDuration::fromMSec(100),
+			              uavcan::MonotonicTime(),
+			              uavcan::CanTxQueue::Qos::Volatile,
+			              uavcan::CanIOFlags(0),
+			              (uint8_t)0xFF);
+
+		// so far we do no checks in this
+		return true;
 	}
 };
 

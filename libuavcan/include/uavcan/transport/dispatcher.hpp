@@ -14,7 +14,7 @@
 #include <uavcan/transport/outgoing_transfer_registry.hpp>
 #include <uavcan/transport/can_io.hpp>
 #include <uavcan/util/linked_list.hpp>
-#include <independent/kdecan.hpp>
+#include <uavcan/transport/independent.hpp>
 
 namespace uavcan
 {
@@ -122,7 +122,7 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     ListenerRegistry lsrv_req_;
     ListenerRegistry lsrv_resp_;
 
-    LinkedListRoot<kdecan::KdeCanTransferListener> kdeCanListener_list_;
+    LinkedListRoot<IndependentTransferListener> IndependentCanListener_list_;
 
 #if !UAVCAN_TINY
     LoopbackFrameListenerRegistry loopback_listeners_;
@@ -178,12 +178,12 @@ public:
     bool registerMessageListener(TransferListener* listener);
     bool registerServiceRequestListener(TransferListener* listener);
     bool registerServiceResponseListener(TransferListener* listener);
-    bool registerKdeCanListener(kdecan::KdeCanTransferListener* listener);
+    bool registerIndependentCanListener(IndependentTransferListener* listener);
 
     void unregisterMessageListener(TransferListener* listener);
     void unregisterServiceRequestListener(TransferListener* listener);
     void unregisterServiceResponseListener(TransferListener* listener);
-    void unregisterKdeCanListener(kdecan::KdeCanTransferListener* listener);
+    void unregisterIndependentCanListener(IndependentTransferListener* listener);
 
     bool hasSubscriber(DataTypeID dtid) const;
     bool hasPublisher(DataTypeID dtid) const;

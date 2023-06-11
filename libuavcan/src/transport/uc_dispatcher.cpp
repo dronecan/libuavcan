@@ -193,17 +193,18 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
         }
         default:
         {
-            if (iface_protocol_[frame.getIfaceIndex()] == KDECANProtocol)
+            IndependentTransferListener* p = IndependentCanListener_list_.get();
+
+            while (p)
             {
-                kdecan::KdeCanTransferListener* p = kdeCanListener_list_.get();
-                while (p)
+                IndependentTransferListener* const next = p->getNextListNode();
+
+                if (p->getCANProtocol() == iface_protocol_[frame.getIfaceIndex()])
                 {
-                    kdecan::KdeCanTransferListener* const next = p->getNextListNode();
-
                     p->handleFrame(can_frame); // p may be modified
-
-                    p = next;
                 }
+
+                p = next;
             }
         }
     }
@@ -390,9 +391,9 @@ bool Dispatcher::registerServiceResponseListener(TransferListener* listener)
     return lsrv_resp_.add(listener, ListenerRegistry::ManyListeners);  // Multiple callers may call same srv
 }
 
-bool Dispatcher::registerKdeCanListener(kdecan::KdeCanTransferListener* listener)
+bool Dispatcher::registerIndependentCanListener(IndependentTransferListener* listener)
 {
-    kdeCanListener_list_.insert(listener);
+    IndependentCanListener_list_.insert(listener);
 
     return true;
 }
@@ -412,9 +413,9 @@ void Dispatcher::unregisterServiceResponseListener(TransferListener* listener)
     lsrv_resp_.remove(listener);
 }
 
-void Dispatcher::unregisterKdeCanListener(kdecan::KdeCanTransferListener* listener)
+void Dispatcher::unregisterIndependentCanListener(IndependentTransferListener* listener)
 {
-    kdeCanListener_list_.remove(listener);
+    IndependentCanListener_list_.remove(listener);
 }
 
 bool Dispatcher::hasSubscriber(DataTypeID dtid) const
