@@ -162,28 +162,50 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
         return;
     }
 
-    switch (frame.getTransferType())
+    switch(iface_protocol_[frame.getIfaceIndex()])
     {
-    case TransferTypeMessageBroadcast:
-    {
-        lmsg_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    case TransferTypeServiceRequest:
-    {
-        lsrv_req_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    case TransferTypeServiceResponse:
-    {
-        lsrv_resp_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    default:
-    {
-        UAVCAN_ASSERT(0);
-        break;
-    }
+        case UAVCANProtocol:
+        {
+            switch (frame.getTransferType())
+            {
+            case TransferTypeMessageBroadcast:
+            {
+                lmsg_.handleFrame(frame);
+                break;
+            }
+            case TransferTypeServiceRequest:
+            {
+                lsrv_req_.handleFrame(frame);
+                break;
+            }
+            case TransferTypeServiceResponse:
+            {
+                lsrv_resp_.handleFrame(frame);
+                break;
+            }
+            default:
+            {
+                UAVCAN_ASSERT(0);
+                break;
+            }
+            }
+            break;
+        }
+        default:
+        {
+            if (iface_protocol_[frame.getIfaceIndex()] == KDECANProtocol)
+            {
+                kdecan::KdeCanTransferListener* p = kdeCanListener_list_.get();
+                while (p)
+                {
+                    kdecan::KdeCanTransferListener* const next = p->getNextListNode();
+
+                    p->handleFrame(can_frame); // p may be modified
+
+                    p = next;
+                }
+            }
+        }
     }
 }
 
@@ -284,6 +306,22 @@ int Dispatcher::spinOnce()
     return num_frames_processed;
 }
 
+int Dispatcher::sendRaw(const CanFrame& can_frame, TransferProtocol CAN_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
+                     CanTxQueue::Qos qos, CanIOFlags flags, uint8_t iface_mask)
+{
+    uint8_t protocol_filtered_iface_mask = iface_mask;
+
+    for (unsigned i = 0; i < canio_.getNumIfaces(); i++)
+    {
+        if (iface_protocol_[i] != CAN_protocol)
+        {
+            protocol_filtered_iface_mask &= ~(1 << i);
+        }
+    }
+
+    return canio_.send(can_frame, tx_deadline, blocking_deadline, protocol_filtered_iface_mask, qos, flags);
+}
+
 int Dispatcher::send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
                      CanTxQueue::Qos qos, CanIOFlags flags, uint8_t iface_mask)
 {
@@ -300,7 +338,18 @@ int Dispatcher::send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTim
         UAVCAN_ASSERT(0);
         return -ErrLogic;
     }
-    return canio_.send(can_frame, tx_deadline, blocking_deadline, iface_mask, qos, flags);
+
+    uint8_t protocol_filtered_iface_mask = iface_mask;
+
+    for (unsigned i = 0; i < canio_.getNumIfaces(); i++)
+    {
+        if (iface_protocol_[i] != frame.getCANProtocol())
+        {
+            protocol_filtered_iface_mask &= ~(1 << i);
+        }
+    }
+
+    return canio_.send(can_frame, tx_deadline, blocking_deadline, protocol_filtered_iface_mask, qos, flags);
 }
 
 void Dispatcher::cleanup(MonotonicTime ts)
@@ -341,6 +390,13 @@ bool Dispatcher::registerServiceResponseListener(TransferListener* listener)
     return lsrv_resp_.add(listener, ListenerRegistry::ManyListeners);  // Multiple callers may call same srv
 }
 
+bool Dispatcher::registerKdeCanListener(kdecan::KdeCanTransferListener* listener)
+{
+    kdeCanListener_list_.insert(listener);
+
+    return true;
+}
+
 void Dispatcher::unregisterMessageListener(TransferListener* listener)
 {
     lmsg_.remove(listener);
@@ -354,6 +410,11 @@ void Dispatcher::unregisterServiceRequestListener(TransferListener* listener)
 void Dispatcher::unregisterServiceResponseListener(TransferListener* listener)
 {
     lsrv_resp_.remove(listener);
+}
+
+void Dispatcher::unregisterKdeCanListener(kdecan::KdeCanTransferListener* listener)
+{
+    kdeCanListener_list_.remove(listener);
 }
 
 bool Dispatcher::hasSubscriber(DataTypeID dtid) const

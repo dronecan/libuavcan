@@ -14,6 +14,7 @@
 #include <uavcan/transport/outgoing_transfer_registry.hpp>
 #include <uavcan/transport/can_io.hpp>
 #include <uavcan/util/linked_list.hpp>
+#include <independent/kdecan.hpp>
 
 namespace uavcan
 {
@@ -44,7 +45,6 @@ protected:
 public:
     virtual void handleLoopbackFrame(const RxFrame& frame) = 0;
 };
-
 
 class UAVCAN_EXPORT LoopbackFrameListenerRegistry : Noncopyable
 {
@@ -86,6 +86,8 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     bool tao_disabled_ = false;
     bool canfd_ = false;
 
+    TransferProtocol iface_protocol_[UAVCAN_STM32H7_NUM_IFACES];
+
     class ListenerRegistry
     {
         LinkedListRoot<TransferListener> list_;
@@ -120,6 +122,8 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     ListenerRegistry lsrv_req_;
     ListenerRegistry lsrv_resp_;
 
+    LinkedListRoot<kdecan::KdeCanTransferListener> kdeCanListener_list_;
+
 #if !UAVCAN_TINY
     LoopbackFrameListenerRegistry loopback_listeners_;
     IRxFrameListener* rx_listener_;
@@ -144,7 +148,12 @@ public:
 #endif
         , self_node_id_(NodeID::Broadcast)  // Default
         , self_node_id_is_set_(false)
-    { }
+    {
+        for (unsigned i = 0; i < driver.getNumIfaces(); i++)
+        {
+            iface_protocol_[i] = UAVCANProtocol;
+        }
+    }
 
     /**
      * This version returns strictly when the deadline is reached.
@@ -159,6 +168,8 @@ public:
     /**
      * Refer to CanIOManager::send() for the parameter description
      */
+    int sendRaw(const CanFrame& can_frame, TransferProtocol CAN_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline, CanTxQueue::Qos qos,
+             CanIOFlags flags, uint8_t iface_mask);
     int send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline, CanTxQueue::Qos qos,
              CanIOFlags flags, uint8_t iface_mask);
 
@@ -167,10 +178,12 @@ public:
     bool registerMessageListener(TransferListener* listener);
     bool registerServiceRequestListener(TransferListener* listener);
     bool registerServiceResponseListener(TransferListener* listener);
+    bool registerKdeCanListener(kdecan::KdeCanTransferListener* listener);
 
     void unregisterMessageListener(TransferListener* listener);
     void unregisterServiceRequestListener(TransferListener* listener);
     void unregisterServiceResponseListener(TransferListener* listener);
+    void unregisterKdeCanListener(kdecan::KdeCanTransferListener* listener);
 
     bool hasSubscriber(DataTypeID dtid) const;
     bool hasPublisher(DataTypeID dtid) const;
@@ -182,6 +195,20 @@ public:
     unsigned getNumMessageListeners()         const { return lmsg_.getNumEntries(); }
     unsigned getNumServiceRequestListeners()  const { return lsrv_req_.getNumEntries(); }
     unsigned getNumServiceResponseListeners() const { return lsrv_resp_.getNumEntries(); }
+
+    bool changeIfaceProtocol(unsigned ifaceId, TransferProtocol protocol)
+    {
+        if (ifaceId < canio_.getNumIfaces())
+        {
+            iface_protocol_[ifaceId] = protocol;
+
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     /**
      * These methods can be used to retreive lists of messages, service requests and service responses the
