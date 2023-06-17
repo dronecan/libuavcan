@@ -86,8 +86,6 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     bool tao_disabled_ = false;
     bool canfd_ = false;
 
-    TransferProtocol iface_protocol_[UAVCAN_STM32H7_NUM_IFACES];
-
     class ListenerRegistry
     {
         LinkedListRoot<TransferListener> list_;
@@ -148,12 +146,7 @@ public:
 #endif
         , self_node_id_(NodeID::Broadcast)  // Default
         , self_node_id_is_set_(false)
-    {
-        for (unsigned i = 0; i < driver.getNumIfaces(); i++)
-        {
-            iface_protocol_[i] = UAVCANProtocol;
-        }
-    }
+    {;}
 
     /**
      * This version returns strictly when the deadline is reached.
@@ -168,8 +161,6 @@ public:
     /**
      * Refer to CanIOManager::send() for the parameter description
      */
-    int sendRaw(const CanFrame& can_frame, TransferProtocol CAN_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline, CanTxQueue::Qos qos,
-             CanIOFlags flags, uint8_t iface_mask);
     int send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline, CanTxQueue::Qos qos,
              CanIOFlags flags, uint8_t iface_mask);
 
@@ -195,20 +186,6 @@ public:
     unsigned getNumMessageListeners()         const { return lmsg_.getNumEntries(); }
     unsigned getNumServiceRequestListeners()  const { return lsrv_req_.getNumEntries(); }
     unsigned getNumServiceResponseListeners() const { return lsrv_resp_.getNumEntries(); }
-
-    bool changeIfaceProtocol(unsigned ifaceId, TransferProtocol protocol)
-    {
-        if (ifaceId < canio_.getNumIfaces())
-        {
-            iface_protocol_[ifaceId] = protocol;
-
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
 
     /**
      * These methods can be used to retreive lists of messages, service requests and service responses the

@@ -162,7 +162,9 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
         return;
     }
 
-    switch(iface_protocol_[frame.getIfaceIndex()])
+    const TransferProtocol iface_protocol = getCanIOManager().getIfaceProtocol(frame.getIfaceIndex());
+
+    switch(iface_protocol)
     {
         case UAVCANProtocol:
         {
@@ -199,7 +201,7 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
             {
                 IndependentTransferListener* const next = p->getNextListNode();
 
-                if (p->getCANProtocol() == iface_protocol_[frame.getIfaceIndex()])
+                if (p->getCANProtocol() == iface_protocol)
                 {
                     p->handleFrame(can_frame); // p may be modified
                 }
@@ -307,22 +309,6 @@ int Dispatcher::spinOnce()
     return num_frames_processed;
 }
 
-int Dispatcher::sendRaw(const CanFrame& can_frame, TransferProtocol CAN_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
-                     CanTxQueue::Qos qos, CanIOFlags flags, uint8_t iface_mask)
-{
-    uint8_t protocol_filtered_iface_mask = iface_mask;
-
-    for (unsigned i = 0; i < canio_.getNumIfaces(); i++)
-    {
-        if (iface_protocol_[i] != CAN_protocol)
-        {
-            protocol_filtered_iface_mask &= ~(1 << i);
-        }
-    }
-
-    return canio_.send(can_frame, tx_deadline, blocking_deadline, protocol_filtered_iface_mask, qos, flags);
-}
-
 int Dispatcher::send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
                      CanTxQueue::Qos qos, CanIOFlags flags, uint8_t iface_mask)
 {
@@ -340,17 +326,7 @@ int Dispatcher::send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTim
         return -ErrLogic;
     }
 
-    uint8_t protocol_filtered_iface_mask = iface_mask;
-
-    for (unsigned i = 0; i < canio_.getNumIfaces(); i++)
-    {
-        if (iface_protocol_[i] != frame.getCANProtocol())
-        {
-            protocol_filtered_iface_mask &= ~(1 << i);
-        }
-    }
-
-    return canio_.send(can_frame, tx_deadline, blocking_deadline, protocol_filtered_iface_mask, qos, flags);
+    return canio_.send(can_frame, tx_deadline, blocking_deadline, iface_mask, qos, flags);
 }
 
 void Dispatcher::cleanup(MonotonicTime ts)

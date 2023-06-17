@@ -25,7 +25,8 @@ enum TransferType
 enum TransferProtocol
 {
     UAVCANProtocol = 0,
-    KDECANProtocol = 1
+    KDECANProtocol = 1,
+    UNKNOWNProtocol = 2
 };
 
 static const uint8_t NumTransferTypes = 3;
