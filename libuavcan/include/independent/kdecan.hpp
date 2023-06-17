@@ -12,6 +12,8 @@ static const int escNodeIdOffset = 2;
 static const int minPwmValue = 1100;
 static const int maxPwmValue = 1940;
 
+static const int MASTER_NODE_ID = 0;
+
 enum kdeCanObjAddr
 {
 	ESCInformation = 0,
@@ -124,7 +126,7 @@ public:
 		uint32_t object_address = can_frame.id & 0x000000FF;
 		uint32_t destination_id = (can_frame.id & 0x0000FF00) >> 8;
 
-		if (destination_id == node_.getNodeID().get() && object_address == target_object_address_ && callback_)
+		if (destination_id == MASTER_NODE_ID && object_address == target_object_address_ && callback_)
 		{
 			callback_(can_frame.id, can_frame.dlc, can_frame.data);
 		}
@@ -156,7 +158,7 @@ public:
 	bool publish(const uint8_t destination_address,
 		     const uint8_t* data)
 	{
-		KdeFrame kde_frame(node_.getNodeID().get(), destination_address, target_object_address_, data);
+		KdeFrame kde_frame(MASTER_NODE_ID, destination_address, target_object_address_, data);
 
 		uavcan::CanFrame can_frame;
 		kde_frame.compile(can_frame);
