@@ -12,13 +12,13 @@ namespace uavcan
 class IndependentTransferListener : public LinkedListNode<IndependentTransferListener>
 {
 public:
-	TransferProtocol protocol_;
+	int protocol_;
 
-	IndependentTransferListener(const TransferProtocol protocol) :
+	IndependentTransferListener(const int protocol) :
 		protocol_(protocol)
 	{;}
 
-	TransferProtocol getCANProtocol() { return protocol_; }
+	int getCANProtocol() { return protocol_; }
 
 	virtual void handleFrame(const CanRxFrame& can_frame) = 0;
 };
@@ -27,13 +27,13 @@ public:
 class IndependentTransferSender
 {
 public:
-	TransferProtocol protocol_;
+	int protocol_;
 
-	IndependentTransferSender(const TransferProtocol protocol) :
+	IndependentTransferSender(const int protocol) :
 		protocol_(protocol)
 	{;}
 
-	TransferProtocol getCANProtocol() { return protocol_; }
+	int getCANProtocol() { return protocol_; }
 };
 
 };

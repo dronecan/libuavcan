@@ -307,7 +307,7 @@ CanIOManager::CanIOManager(ICanDriver& driver, IPoolAllocator& allocator, ISyste
     }
 }
 
-bool CanIOManager::changeIfaceProtocol(unsigned ifaceId, TransferProtocol protocol)
+bool CanIOManager::changeIfaceProtocol(unsigned ifaceId, int protocol)
 {
     if (ifaceId < getNumIfaces())
     {
@@ -321,7 +321,7 @@ bool CanIOManager::changeIfaceProtocol(unsigned ifaceId, TransferProtocol protoc
     }
 }
 
-TransferProtocol CanIOManager::getIfaceProtocol(unsigned ifaceId)
+int CanIOManager::getIfaceProtocol(unsigned ifaceId)
 {
     if (ifaceId < getNumIfaces())
     {
@@ -329,7 +329,7 @@ TransferProtocol CanIOManager::getIfaceProtocol(unsigned ifaceId)
     }
     else
     {
-        return UNKNOWNProtocol;
+        return -1;
     }
 }
 
@@ -364,10 +364,10 @@ CanIfacePerfCounters CanIOManager::getIfacePerfCounters(uint8_t iface_index) con
 int CanIOManager::send(const CanFrame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
                        uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags)
 {
-    return send(frame, UAVCANProtocol, tx_deadline, blocking_deadline, iface_mask, qos, flags);
+    return send(frame, uavcan::protocolID, tx_deadline, blocking_deadline, iface_mask, qos, flags);
 }
 
-int CanIOManager::send(const CanFrame& frame, TransferProtocol frame_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
+int CanIOManager::send(const CanFrame& frame, int frame_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
                        uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags)
 {
     const uint8_t num_ifaces = getNumIfaces();

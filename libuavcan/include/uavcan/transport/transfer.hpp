@@ -22,12 +22,7 @@ enum TransferType
     TransferTypeMessageBroadcast = 2
 };
 
-enum TransferProtocol
-{
-    UAVCANProtocol = 0,
-    KDECANProtocol = 1,
-    UNKNOWNProtocol = 2
-};
+static const unsigned protocolID = 0;
 
 static const uint8_t NumTransferTypes = 3;
 

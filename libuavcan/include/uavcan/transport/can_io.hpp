@@ -149,7 +149,7 @@ class UAVCAN_EXPORT CanIOManager : Noncopyable
 
     LazyConstructor<CanTxQueue> tx_queues_[MaxCanIfaces];
     IfaceFrameCounters counters_[MaxCanIfaces];
-    TransferProtocol iface_protocol_[MaxCanIfaces];
+    int iface_protocol_[MaxCanIfaces];
 
     const uint8_t num_ifaces_;
 
@@ -162,8 +162,8 @@ public:
     CanIOManager(ICanDriver& driver, IPoolAllocator& allocator, ISystemClock& sysclock,
                  std::size_t mem_blocks_per_iface = 0);
 
-    bool changeIfaceProtocol(unsigned ifaceId, TransferProtocol protocol);
-    TransferProtocol getIfaceProtocol(unsigned ifaceId);
+    bool changeIfaceProtocol(unsigned ifaceId, int protocol);
+    int getIfaceProtocol(unsigned ifaceId);
 
     uint8_t getNumIfaces() const { return num_ifaces_; }
 
@@ -182,7 +182,7 @@ public:
      */
     int send(const CanFrame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
              uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags);
-    int send(const CanFrame& frame, TransferProtocol frame_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
+    int send(const CanFrame& frame, int frame_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
              uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags);
     int receive(CanRxFrame& out_frame, MonotonicTime blocking_deadline, CanIOFlags& out_flags);
 };
