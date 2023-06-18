@@ -162,11 +162,11 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
         return;
     }
 
-    const int iface_protocol = getCanIOManager().getIfaceProtocol(frame.getIfaceIndex());
+    const Protocol iface_protocol = getCanIOManager().getIfaceProtocol(frame.getIfaceIndex());
 
     switch(iface_protocol)
     {
-        case uavcan::protocolID:
+        case Protocol::Standard:
         {
             switch (frame.getTransferType())
             {

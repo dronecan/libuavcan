@@ -22,7 +22,14 @@ enum TransferType
     TransferTypeMessageBroadcast = 2
 };
 
-static const unsigned protocolID = 0;
+enum Protocol
+{
+    Standard = 0,
+    Custom1 = 1,
+    Custom2 = 2,
+    Custom3 = 3,
+    Invalid = 4
+};
 
 static const uint8_t NumTransferTypes = 3;
 

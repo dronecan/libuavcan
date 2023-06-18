@@ -14,7 +14,7 @@
 #include <uavcan/transport/outgoing_transfer_registry.hpp>
 #include <uavcan/transport/can_io.hpp>
 #include <uavcan/util/linked_list.hpp>
-#include <uavcan/transport/independent.hpp>
+#include <uavcan/transport/custom_protocols.hpp>
 
 namespace uavcan
 {
