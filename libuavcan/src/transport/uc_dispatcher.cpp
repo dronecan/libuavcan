@@ -195,11 +195,11 @@ void Dispatcher::handleFrame(const CanRxFrame& can_frame)
         }
         default:
         {
-            IndependentTransferListener* p = IndependentCanListener_list_.get();
+            CustomTransferListener* p = CustomCanListener_list_.get();
 
             while (p)
             {
-                IndependentTransferListener* const next = p->getNextListNode();
+                CustomTransferListener* const next = p->getNextListNode();
 
                 if (p->getCANProtocol() == iface_protocol)
                 {
@@ -367,9 +367,9 @@ bool Dispatcher::registerServiceResponseListener(TransferListener* listener)
     return lsrv_resp_.add(listener, ListenerRegistry::ManyListeners);  // Multiple callers may call same srv
 }
 
-bool Dispatcher::registerIndependentCanListener(IndependentTransferListener* listener)
+bool Dispatcher::registerCustomCanListener(CustomTransferListener* listener)
 {
-    IndependentCanListener_list_.insert(listener);
+    CustomCanListener_list_.insert(listener);
 
     return true;
 }
@@ -389,9 +389,9 @@ void Dispatcher::unregisterServiceResponseListener(TransferListener* listener)
     lsrv_resp_.remove(listener);
 }
 
-void Dispatcher::unregisterIndependentCanListener(IndependentTransferListener* listener)
+void Dispatcher::unregisterCustomCanListener(CustomTransferListener* listener)
 {
-    IndependentCanListener_list_.remove(listener);
+    CustomCanListener_list_.remove(listener);
 }
 
 bool Dispatcher::hasSubscriber(DataTypeID dtid) const

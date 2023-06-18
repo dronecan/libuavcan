@@ -120,7 +120,7 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     ListenerRegistry lsrv_req_;
     ListenerRegistry lsrv_resp_;
 
-    LinkedListRoot<IndependentTransferListener> IndependentCanListener_list_;
+    LinkedListRoot<CustomTransferListener> CustomCanListener_list_;
 
 #if !UAVCAN_TINY
     LoopbackFrameListenerRegistry loopback_listeners_;
@@ -169,12 +169,12 @@ public:
     bool registerMessageListener(TransferListener* listener);
     bool registerServiceRequestListener(TransferListener* listener);
     bool registerServiceResponseListener(TransferListener* listener);
-    bool registerIndependentCanListener(IndependentTransferListener* listener);
+    bool registerCustomCanListener(CustomTransferListener* listener);
 
     void unregisterMessageListener(TransferListener* listener);
     void unregisterServiceRequestListener(TransferListener* listener);
     void unregisterServiceResponseListener(TransferListener* listener);
-    void unregisterIndependentCanListener(IndependentTransferListener* listener);
+    void unregisterCustomCanListener(CustomTransferListener* listener);
 
     bool hasSubscriber(DataTypeID dtid) const;
     bool hasPublisher(DataTypeID dtid) const;

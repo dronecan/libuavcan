@@ -9,12 +9,12 @@
 namespace uavcan
 {
 
-class IndependentTransferListener : public LinkedListNode<IndependentTransferListener>
+class CustomTransferListener : public LinkedListNode<CustomTransferListener>
 {
 public:
 	int protocol_;
 
-	IndependentTransferListener(const int protocol) :
+	CustomTransferListener(const int protocol) :
 		protocol_(protocol)
 	{;}
 
@@ -24,12 +24,12 @@ public:
 };
 
 // right now this class is useless
-class IndependentTransferSender
+class CustomTransferSender
 {
 public:
 	int protocol_;
 
-	IndependentTransferSender(const int protocol) :
+	CustomTransferSender(const int protocol) :
 		protocol_(protocol)
 	{;}
 
