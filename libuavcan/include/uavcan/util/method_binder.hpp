@@ -77,13 +77,6 @@ public:
         validateBeforeCall();
         (obj_->*fun_)(p1, p2);
     }
-
-    template <typename Par1, typename Par2, typename Par3>
-    void operator()(Par1& p1, Par2& p2, Par3& p3)
-    {
-        validateBeforeCall();
-        (obj_->*fun_)(p1, p2, p3);
-    }
 };
 
 }
