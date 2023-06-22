@@ -149,65 +149,72 @@ void Dispatcher::ListenerRegistry::handleFrame(const RxFrame& frame, bool tao_di
 void Dispatcher::handleFrame(const CanRxFrame& can_frame)
 {
     RxFrame frame;
-    if (!frame.parse(can_frame))
-    {
-        // This is not counted as a transport error
-        UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
-        return;
-    }
 
-    if ((frame.getDstNodeID() != NodeID::Broadcast) &&
-        (frame.getDstNodeID() != getNodeID()))
-    {
-        return;
-    }
+    const Protocol iface_protocol = getCanIOManager().getIfaceProtocol(can_frame.iface_index);
 
-    const Protocol iface_protocol = getCanIOManager().getIfaceProtocol(frame.getIfaceIndex());
-
-    switch(iface_protocol)
+    // next block of operations only valid for UAVCAN, which requires extended frame
+    if (can_frame.isExtended() && iface_protocol == Protocol::Standard)
     {
-        case Protocol::Standard:
+        if (!frame.parse(can_frame))
         {
-            switch (frame.getTransferType())
-            {
-            case TransferTypeMessageBroadcast:
-            {
-                lmsg_.handleFrame(frame);
-                break;
-            }
-            case TransferTypeServiceRequest:
-            {
-                lsrv_req_.handleFrame(frame);
-                break;
-            }
-            case TransferTypeServiceResponse:
-            {
-                lsrv_resp_.handleFrame(frame);
-                break;
-            }
-            default:
-            {
-                UAVCAN_ASSERT(0);
-                break;
-            }
-            }
+            // This is not counted as a transport error
+            UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
+            return;
+        }
+
+        if ((frame.getDstNodeID() != NodeID::Broadcast) &&
+            (frame.getDstNodeID() != getNodeID()))
+        {
+            return;
+        }
+    }
+
+    if (iface_protocol == Protocol::Standard && can_frame.isExtended())
+    {
+        switch (frame.getTransferType())
+        {
+        case TransferTypeMessageBroadcast:
+        {
+            lmsg_.handleFrame(frame);
+            break;
+        }
+        case TransferTypeServiceRequest:
+        {
+            lsrv_req_.handleFrame(frame);
+            break;
+        }
+        case TransferTypeServiceResponse:
+        {
+            lsrv_resp_.handleFrame(frame);
             break;
         }
         default:
         {
-            CustomTransferListener* p = CustomCanListener_list_.get();
+            UAVCAN_ASSERT(0);
+            break;
+        }
+        }
+    }
+    else
+    {
+        bool success = false;
 
-            while (p)
-            {
-                CustomTransferListener* const next = p->getNextListNode();
+        CustomTransferListener* p = CustomCanListener_list_.get();
 
-                if (p->getCANProtocol() == iface_protocol)
-                {
-                    p->handleFrame(can_frame); // p may be modified
-                }
+        while (p)
+        {
+            CustomTransferListener* const next = p->getNextListNode();
 
-                p = next;
-            }
+            success = success || p->handleFrame(can_frame, iface_protocol); // p may be modified
+
+            p = next;
+        }
+
+        if (!success)
+        {
+            // This is not counted as a transport error
+            UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
+            return;
         }
     }
 }

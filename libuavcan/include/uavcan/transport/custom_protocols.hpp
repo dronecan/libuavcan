@@ -12,28 +12,32 @@ namespace uavcan
 class CustomTransferListener : public LinkedListNode<CustomTransferListener>
 {
 public:
-	int protocol_;
+	Protocol protocol_;
 
-	CustomTransferListener(const int protocol) :
+	CustomTransferListener() : protocol_(Protocol::Standard) {;}
+
+	CustomTransferListener(const Protocol protocol) :
 		protocol_(protocol)
 	{;}
 
-	int getCANProtocol() { return protocol_; }
+	Protocol getCANProtocol() { return protocol_; }
 
-	virtual void handleFrame(const CanRxFrame& can_frame) = 0;
+	virtual bool handleFrame(const CanRxFrame& can_frame, const Protocol protocol) = 0;
 };
 
 // right now this class is useless
 class CustomTransferSender
 {
 public:
-	int protocol_;
+	Protocol protocol_;
 
-	CustomTransferSender(const int protocol) :
+	CustomTransferSender() : protocol_(Protocol::Standard) {;}
+
+	CustomTransferSender(const Protocol protocol) :
 		protocol_(protocol)
 	{;}
 
-	int getCANProtocol() { return protocol_; }
+	Protocol getCANProtocol() { return protocol_; }
 };
 
 };
