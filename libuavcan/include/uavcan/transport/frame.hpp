@@ -41,7 +41,8 @@ public:
         payload_len_(0),
         start_of_transfer_(false),
         end_of_transfer_(false),
-        toggle_(false)
+        toggle_(false),
+        canfd_frame_(false)
     { }
 
     Frame(DataTypeID data_type_id,
@@ -59,7 +60,8 @@ public:
         transfer_id_(transfer_id),
         start_of_transfer_(false),
         end_of_transfer_(false),
-        toggle_(false)
+        toggle_(false),
+        canfd_frame_(canfd_frame)
     {
         UAVCAN_ASSERT((transfer_type == TransferTypeMessageBroadcast) == dst_node_id.isBroadcast());
         UAVCAN_ASSERT(data_type_id.isValidForDataTypeKind(getDataTypeKindForTransferType(transfer_type)));
