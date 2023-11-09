@@ -149,41 +149,73 @@ void Dispatcher::ListenerRegistry::handleFrame(const RxFrame& frame, bool tao_di
 void Dispatcher::handleFrame(const CanRxFrame& can_frame)
 {
     RxFrame frame;
-    if (!frame.parse(can_frame))
+
+    const Protocol iface_protocol = getCanIOManager().getIfaceProtocol(can_frame.iface_index);
+
+    // next block of operations only valid for UAVCAN, which requires extended frame
+    if (can_frame.isExtended() && iface_protocol == Protocol::Standard)
     {
-        // This is not counted as a transport error
-        UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
-        return;
+        if (!frame.parse(can_frame))
+        {
+            // This is not counted as a transport error
+            UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
+            return;
+        }
+
+        if ((frame.getDstNodeID() != NodeID::Broadcast) &&
+            (frame.getDstNodeID() != getNodeID()))
+        {
+            return;
+        }
     }
 
-    if ((frame.getDstNodeID() != NodeID::Broadcast) &&
-        (frame.getDstNodeID() != getNodeID()))
+    if (iface_protocol == Protocol::Standard && can_frame.isExtended())
     {
-        return;
+        switch (frame.getTransferType())
+        {
+        case TransferTypeMessageBroadcast:
+        {
+            lmsg_.handleFrame(frame, tao_disabled_);
+            break;
+        }
+        case TransferTypeServiceRequest:
+        {
+            lsrv_req_.handleFrame(frame, tao_disabled_);
+            break;
+        }
+        case TransferTypeServiceResponse:
+        {
+            lsrv_resp_.handleFrame(frame, tao_disabled_);
+            break;
+        }
+        default:
+        {
+            UAVCAN_ASSERT(0);
+            break;
+        }
+        }
     }
+    else
+    {
+        bool success = false;
 
-    switch (frame.getTransferType())
-    {
-    case TransferTypeMessageBroadcast:
-    {
-        lmsg_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    case TransferTypeServiceRequest:
-    {
-        lsrv_req_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    case TransferTypeServiceResponse:
-    {
-        lsrv_resp_.handleFrame(frame, tao_disabled_);
-        break;
-    }
-    default:
-    {
-        UAVCAN_ASSERT(0);
-        break;
-    }
+        CustomTransferListener* p = CustomCanListener_list_.get();
+
+        while (p)
+        {
+            CustomTransferListener* const next = p->getNextListNode();
+
+            success = success || p->handleFrame(can_frame, iface_protocol); // p may be modified
+
+            p = next;
+        }
+
+        if (!success)
+        {
+            // This is not counted as a transport error
+            UAVCAN_TRACE("Dispatcher", "Invalid CAN frame received: %s", can_frame.toString().c_str());
+            return;
+        }
     }
 }
 
@@ -300,6 +332,7 @@ int Dispatcher::send(const Frame& frame, MonotonicTime tx_deadline, MonotonicTim
         UAVCAN_ASSERT(0);
         return -ErrLogic;
     }
+
     return canio_.send(can_frame, tx_deadline, blocking_deadline, iface_mask, qos, flags);
 }
 
@@ -341,6 +374,13 @@ bool Dispatcher::registerServiceResponseListener(TransferListener* listener)
     return lsrv_resp_.add(listener, ListenerRegistry::ManyListeners);  // Multiple callers may call same srv
 }
 
+bool Dispatcher::registerCustomCanListener(CustomTransferListener* listener)
+{
+    CustomCanListener_list_.insert(listener);
+
+    return true;
+}
+
 void Dispatcher::unregisterMessageListener(TransferListener* listener)
 {
     lmsg_.remove(listener);
@@ -354,6 +394,11 @@ void Dispatcher::unregisterServiceRequestListener(TransferListener* listener)
 void Dispatcher::unregisterServiceResponseListener(TransferListener* listener)
 {
     lsrv_resp_.remove(listener);
+}
+
+void Dispatcher::unregisterCustomCanListener(CustomTransferListener* listener)
+{
+    CustomCanListener_list_.remove(listener);
 }
 
 bool Dispatcher::hasSubscriber(DataTypeID dtid) const

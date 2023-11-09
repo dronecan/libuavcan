@@ -14,6 +14,7 @@
 #include <uavcan/transport/outgoing_transfer_registry.hpp>
 #include <uavcan/transport/can_io.hpp>
 #include <uavcan/util/linked_list.hpp>
+#include <uavcan/transport/custom_protocols.hpp>
 
 namespace uavcan
 {
@@ -44,7 +45,6 @@ protected:
 public:
     virtual void handleLoopbackFrame(const RxFrame& frame) = 0;
 };
-
 
 class UAVCAN_EXPORT LoopbackFrameListenerRegistry : Noncopyable
 {
@@ -120,6 +120,8 @@ class UAVCAN_EXPORT Dispatcher : Noncopyable
     ListenerRegistry lsrv_req_;
     ListenerRegistry lsrv_resp_;
 
+    LinkedListRoot<CustomTransferListener> CustomCanListener_list_;
+
 #if !UAVCAN_TINY
     LoopbackFrameListenerRegistry loopback_listeners_;
     IRxFrameListener* rx_listener_;
@@ -144,7 +146,7 @@ public:
 #endif
         , self_node_id_(NodeID::Broadcast)  // Default
         , self_node_id_is_set_(false)
-    { }
+    {;}
 
     /**
      * This version returns strictly when the deadline is reached.
@@ -167,10 +169,12 @@ public:
     bool registerMessageListener(TransferListener* listener);
     bool registerServiceRequestListener(TransferListener* listener);
     bool registerServiceResponseListener(TransferListener* listener);
+    bool registerCustomCanListener(CustomTransferListener* listener);
 
     void unregisterMessageListener(TransferListener* listener);
     void unregisterServiceRequestListener(TransferListener* listener);
     void unregisterServiceResponseListener(TransferListener* listener);
+    void unregisterCustomCanListener(CustomTransferListener* listener);
 
     bool hasSubscriber(DataTypeID dtid) const;
     bool hasPublisher(DataTypeID dtid) const;

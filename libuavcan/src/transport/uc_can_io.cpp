@@ -307,6 +307,32 @@ CanIOManager::CanIOManager(ICanDriver& driver, IPoolAllocator& allocator, ISyste
     }
 }
 
+bool CanIOManager::changeIfaceProtocol(unsigned ifaceId, Protocol protocol)
+{
+    if (ifaceId < getNumIfaces() && protocol != Protocol::Invalid)
+    {
+        iface_protocol_[ifaceId] = protocol;
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+Protocol CanIOManager::getIfaceProtocol(unsigned ifaceId)
+{
+    if (ifaceId < getNumIfaces())
+    {
+        return iface_protocol_[ifaceId];
+    }
+    else
+    {
+        return Protocol::Invalid;
+    }
+}
+
 uint8_t CanIOManager::makePendingTxMask() const
 {
     uint8_t write_mask = 0;
@@ -338,9 +364,25 @@ CanIfacePerfCounters CanIOManager::getIfacePerfCounters(uint8_t iface_index) con
 int CanIOManager::send(const CanFrame& frame, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
                        uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags)
 {
+    return send(frame, Protocol::Standard, tx_deadline, blocking_deadline, iface_mask, qos, flags);
+}
+
+int CanIOManager::send(const CanFrame& frame, int frame_protocol, MonotonicTime tx_deadline, MonotonicTime blocking_deadline,
+                       uint8_t iface_mask, CanTxQueue::Qos qos, CanIOFlags flags)
+{
     const uint8_t num_ifaces = getNumIfaces();
     const uint8_t all_ifaces_mask = uint8_t((1U << num_ifaces) - 1);
+
     iface_mask &= all_ifaces_mask;
+
+    // make sure we send frames of a specific protocol only for ifaces configured with the same protocol
+    for (unsigned i = 0; i < getNumIfaces(); i++)
+    {
+        if (iface_protocol_[i] != frame_protocol)
+        {
+            iface_mask &= ~(1 << i);
+        }
+    }
 
     if (blocking_deadline > tx_deadline)
     {
