@@ -1,3 +1,16 @@
+Libuavcan is Deprecated
+=======================
+
+NOTE! This libuavcan library is not recommended for new projects. Instead use
+the C++ API in the libcanard library, which provides a much lighter
+weight and easier to use API.
+
+See https://github.com/dronecan/libcanard/tree/master/canard
+
+See this example for a quick start on using the new libcanard C++ API:
+
+https://github.com/dronecan/libcanard/tree/master/examples/ESCNode_C%2B%2B
+
 DroneCAN stack in C++
 =====================
 
